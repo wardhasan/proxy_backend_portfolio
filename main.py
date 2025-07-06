@@ -50,8 +50,13 @@ async def proxy_chat(request: Request, x_frontend_secret: str = Header(None)):
         raise HTTPException(status_code=403, detail="Unauthorized: Invalid frontend secret")
 
     body = await request.json()
-
-    async with httpx.AsyncClient() as client:
+    timeout = httpx.Timeout(
+        connect=5.0,  # time to establish connection
+        read=60.0,    # time to wait for response body
+        write=5.0,    # time to upload the request
+        pool=5.0      # how long to wait for a free connection from the pool
+    )
+    async with httpx.AsyncClient(timeout=timeout) as client:
         res = await client.post(
             BACKEND_URL,
             headers={"X-Api-Secret": BACKEND_SECRET},
